@@ -6,7 +6,15 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 # ===============================
-# LOAD MODEL, SCALER, DATASET
+# PAGE CONFIG
+# ===============================
+st.set_page_config(
+    page_title="Clustering Pelanggan Wholesale",
+    layout="wide"
+)
+
+# ===============================
+# LOAD MODEL & DATA
 # ===============================
 kmeans = joblib.load("kmeans_model.pkl")
 scaler = joblib.load("scaler_kmeans.pkl")
@@ -14,16 +22,18 @@ scaler = joblib.load("scaler_kmeans.pkl")
 df = pd.read_csv("Wholesale_customers.csv")
 
 features = [
-    "Fresh", "Milk", "Grocery",
-    "Frozen", "Detergents_Paper", "Delicassen"
+    "Fresh",
+    "Milk",
+    "Grocery",
+    "Frozen",
+    "Detergents_Paper",
+    "Delicassen"
 ]
 
 # ===============================
-# PAGE SETUP
+# TITLE
 # ===============================
-st.set_page_config(page_title="Clustering Pelanggan", layout="wide")
-
-st.title("📊 Clustering Pelanggan Wholesale")
+st.title("📊 Aplikasi Clustering Pelanggan Wholesale")
 st.write(
     """
     Aplikasi ini mengelompokkan pelanggan berdasarkan pola pembelian
@@ -32,7 +42,7 @@ st.write(
 )
 
 # ===============================
-# DEFINISI CLUSTER
+# CLUSTER DESCRIPTION
 # ===============================
 cluster_desc = {
     0: "Pelanggan dengan tingkat pembelian rendah",
@@ -53,26 +63,35 @@ detergents = st.sidebar.number_input("Detergents_Paper", min_value=0, value=1000
 delicassen = st.sidebar.number_input("Delicassen", min_value=0, value=800)
 
 # ===============================
-# PREDIKSI
+# PREDICTION
 # ===============================
 if st.sidebar.button("🔍 Prediksi Cluster"):
+    # Data input user
     input_data = pd.DataFrame([[
-        fresh, milk, grocery, frozen, detergents, delicassen
+        fresh,
+        milk,
+        grocery,
+        frozen,
+        detergents,
+        delicassen
     ]], columns=features)
 
+    # Scaling
     input_scaled = scaler.transform(input_data)
+
+    # Predict cluster
     cluster = kmeans.predict(input_scaled)[0]
 
     # ===============================
-    # OUTPUT TEKS
+    # OUTPUT TEXT
     # ===============================
     st.success(f"📌 Hasil Prediksi: **Cluster {cluster}**")
-    st.info(f"🧠 Karakteristik: {cluster_desc.get(cluster)}")
+    st.info(f"🧠 Karakteristik Cluster: {cluster_desc.get(cluster)}")
 
     st.subheader("📌 Kesimpulan")
     st.write(
         f"""
-        Berdasarkan nilai pembelian yang dimasukkan,
+        Berdasarkan data pembelian yang dimasukkan,
         pelanggan ini termasuk dalam **{cluster_desc.get(cluster)}**.
         Hasil ini dapat digunakan sebagai dasar
         pengambilan keputusan strategi pemasaran.
@@ -80,12 +99,15 @@ if st.sidebar.button("🔍 Prediksi Cluster"):
     )
 
     # ===============================
-    # VISUALISASI CLUSTER (PCA)
+    # VISUALIZATION (PCA)
     # ===============================
     st.subheader("📈 Visualisasi Clustering (PCA 2D)")
 
     # Scaling seluruh dataset
     X_scaled = scaler.transform(df[features])
+
+    # Predict cluster seluruh dataset (WAJIB)
+    labels = kmeans.predict(X_scaled)
 
     # PCA
     pca = PCA(n_components=2)
@@ -100,7 +122,7 @@ if st.sidebar.button("🔍 Prediksi Cluster"):
     scatter = ax.scatter(
         X_pca[:, 0],
         X_pca[:, 1],
-        c=kmeans.labels_,
+        c=labels,
         cmap="viridis",
         alpha=0.6
     )
@@ -116,13 +138,13 @@ if st.sidebar.button("🔍 Prediksi Cluster"):
 
     ax.set_xlabel("PCA 1")
     ax.set_ylabel("PCA 2")
-    ax.set_title("Visualisasi Cluster Pelanggan")
+    ax.set_title("Visualisasi Cluster Pelanggan (PCA)")
     ax.legend()
 
     st.pyplot(fig)
 
     # ===============================
-    # TAMPILKAN DATA INPUT
+    # INPUT DATA DISPLAY
     # ===============================
     st.subheader("📊 Data Input Pelanggan")
     st.dataframe(input_data)
